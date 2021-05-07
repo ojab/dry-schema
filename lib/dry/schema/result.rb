@@ -71,12 +71,17 @@ module Dry
         @path || Path::EMPTY
       end
 
+      def dig(*path)
+        path.reduce(@output) { |output, key| output.fetch(key) }
+      end
+
+      def output
+        dig(*path)
+      end
+
       # Dump result to a hash returning processed and validated data
       #
       # @return [Hash]
-      def output
-        path.equal?(Path::EMPTY) ? @output : @output.dig(*path)
-      end
       alias_method :to_h, :output
 
       # @api private
