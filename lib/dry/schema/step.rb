@@ -17,53 +17,30 @@ module Dry
       attr_reader :executor
 
       # @api private
-      class Scoped
-        # @api private
-        attr_reader :path
-
-        # @api private
-        attr_reader :step
-
-        # @api private
-        def initialize(path, step)
-          @path = Path[path]
-          @step = step
-        end
-
-        # @api private
-        def scoped(new_path)
-          self.class.new(Path[[*new_path, *path]], step)
-        end
-
-        # @api private
-        def call(result)
-          result.at(path) do |scoped_result|
-            output = step.(scoped_result).to_h
-            target = Array(path)[0..-2].reduce(result) { |a, e| a[e] }
-
-            target.update(path.last => output)
-          end
-        end
-      end
+      attr_reader :path
 
       # @api private
-      def initialize(type:, name:, executor:)
+      def initialize(type:, name:, executor:, path: Path.new([]))
         @type = type
         @name = name
         @executor = executor
+        @path = path
         validate_name(name)
       end
 
       # @api private
       def call(result)
-        output = executor.(result)
-        result.replace(output) if output.is_a?(Hash)
-        output
+        result.at(path) do |scoped_result|
+          output = executor.(scoped_result)
+          scoped_result.replace(output) if output.is_a?(Hash)
+          output
+        end
       end
 
       # @api private
-      def scoped(path)
-        Scoped.new(path, self)
+      def scoped(new_path)
+        path.keys.unshift(*new_path)
+        self
       end
 
       private
