@@ -38,9 +38,13 @@ module Dry
       end
 
       # @api private
-      def scoped(new_path)
-        path.keys.unshift(*new_path)
-        self
+      def scoped(parent_path)
+        self.class.new(
+          type: type,
+          name: name,
+          executor: executor,
+          path: Path.new([*parent_path, *path])
+        )
       end
 
       private
